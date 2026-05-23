@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>小账本</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #f5f0e8;
+    --card: #ffffff;
+    --ink: #1a1410;
+    --ink2: #5a4e42;
+    --ink3: #9a8e82;
+    --accent: #c0392b;
+    --accent2: #e74c3c;
+    --border: #e0d8cc;
+    --tag-active: #1a1410;
+    --tag-text: #ffffff;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Noto Serif SC', 'PingFang SC', serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px 20px 12px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .header-left h1 { font-size: 22px; font-weight: 700; letter-spacing: 2px; }
+  .header-left .date { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+  .header-total { font-size: 26px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+
+  /* ===== TABS ===== */
+  .tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .tab {
+    padding: 12px 16px 10px;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--ink3);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+  .tab.active { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+
+  /* ===== FORM CARD ===== */
+  .form-card {
+    margin: 16px;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+
+  /* Category tags */
+  .cat-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .cat-tag {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    font-size: 13px;
+    cursor: pointer;
+    background: var(--bg);
+    color: var(--ink2);
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .cat-tag.active {
+    background: var(--tag-active);
+    color: var(--tag-text);
+    border-color: var(--tag-active);
+  }
+  .cat-tag .emoji { font-size: 15px; }
+
+  /* Input row */
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .input-group label {
+    font-size: 11px;
+    color: var(--ink3);
+    display: block;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+  }
+  input[type="text"], input[type="number"], input[type="date"], select {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus, select:focus { border-color: var(--ink); }
+  input::placeholder { color: var(--ink3); font-size: 13px; }
+
+  .date-row { margin-bottom: 14px; }
+  .date-row label { font-size: 11px; color: var(--ink3); display: block; margin-bottom: 4px; }
+
+  .btn-submit {
+    width: 100%;
+    padding: 13px;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: opacity 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn-submit:active { opacity: 0.75; }
+
+  /* ===== VOICE BUTTON ===== */
+  .voice-section {
+    margin: 0 16px 4px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .voice-btn {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    transition: transform 0.1s, background 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    position: relative;
+  }
+  .voice-btn:active, .voice-btn.recording { background: var(--accent); transform: scale(1.08); }
+  .voice-btn svg { width: 24px; height: 24px; fill: #fff; }
+  .voice-btn.recording::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(192,57,43,0.3);
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.7); opacity: 0; }
+  }
+  .voice-hint {
+    font-size: 12px;
+    color: var(--ink3);
+    line-height: 1.6;
+  }
+  .voice-hint strong { color: var(--ink2); font-weight: 600; }
+  .voice-transcript {
+    flex: 1;
+    font-size: 13px;
+    color: var(--ink2);
+    font-style: italic;
+    min-height: 20px;
+  }
+
+  /* ===== VOICE STATUS ===== */
+  .voice-status {
+    margin: 6px 16px 0;
+    font-size: 12px;
+    color: var(--ink3);
+    min-height: 18px;
+    transition: color 0.2s;
+  }
+  .voice-status.ok { color: #27ae60; }
+  .voice-status.err { color: var(--accent); }
+  .voice-status.loading { color: #e67e22; }
+
+  /* ===== RECORDS ===== */
+  .section-date {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px 6px;
+  }
+  .section-date-label { font-size: 13px; color: var(--ink3); letter-spacing: 0.5px; }
+  .section-date-label::before { content: '▼ '; font-size: 10px; }
+  .section-date-total { font-size: 14px; font-weight: 700; color: var(--accent); }
+
+  .record-list { padding: 0 16px; }
+
+  .record-item {
+    background: var(--card);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--border);
+    animation: slideIn 0.2s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .record-icon { font-size: 22px; flex-shrink: 0; }
+  .record-info { flex: 1; min-width: 0; }
+  .record-cat { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .record-note { font-size: 11px; color: var(--ink3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .record-time { font-size: 11px; color: var(--ink3); }
+  .record-right { text-align: right; flex-shrink: 0; }
+  .record-amount { font-size: 16px; font-weight: 700; color: var(--ink); }
+  .record-del {
+    font-size: 18px;
+    color: var(--border);
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.15s;
+    margin-left: 6px;
+  }
+  .record-del:active { color: var(--accent); }
+
+  /* ===== STATS (本周/月度) ===== */
+  .stats-card {
+    margin: 16px;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .stats-title { font-size: 13px; color: var(--ink3); margin-bottom: 12px; letter-spacing: 1px; }
+  .stats-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .stats-row:last-child { border-bottom: none; }
+  .stats-cat { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .stats-amt { font-size: 15px; font-weight: 700; color: var(--accent); }
+  .stats-total-row { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 2px solid var(--ink); }
+  .stats-total-label { font-size: 14px; font-weight: 700; }
+  .stats-total-amt { font-size: 18px; font-weight: 700; color: var(--accent); }
+
+  .empty-hint { text-align: center; color: var(--ink3); font-size: 13px; padding: 30px 0; }
+
+  /* Tab content show/hide */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <h1>小账本</h1>
+    <div class="date" id="headerDate"></div>
+  </div>
+  <div class="header-total" id="headerTotal">¥0.00</div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" data-tab="jz">记账</div>
+  <div class="tab" data-tab="week">本周</div>
+  <div class="tab" data-tab="month">月度</div>
+</div>
+
+<!-- TAB: 记账 -->
+<div class="tab-content active" id="tab-jz">
+
+  <!-- VOICE SECTION -->
+  <div style="margin: 14px 16px 0; display:flex; align-items:center; gap:10px;">
+    <button class="voice-btn" id="voiceBtn" title="按住说话">
+      <svg viewBox="0 0 24 24"><path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v6a2 2 0 0 0 4 0V5a2 2 0 0 0-2-2zm7 8a1 1 0 0 1 1 1 8 8 0 0 1-7 7.938V22h2a1 1 0 0 1 0 2H9a1 1 0 0 1 0-2h2v-2.062A8 8 0 0 1 4 12a1 1 0 0 1 2 0 6 6 0 0 0 12 0 1 1 0 0 1 1-1z"/></svg>
+    </button>
+    <div>
+      <div style="font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:2px;">按住麦克风说话</div>
+      <div class="voice-hint">例：<strong>"外卖三十五块"</strong>、<strong>"买菜猪肉青菜四十二"</strong></div>
+    </div>
+  </div>
+  <div class="voice-status" id="voiceStatus"></div>
+
+  <!-- FORM CARD -->
+  <div class="form-card">
+    <div class="cat-row" id="catRow">
+      <div class="cat-tag active" data-cat="买菜"><span class="emoji">🛒</span>买菜</div>
+      <div class="cat-tag" data-cat="外卖"><span class="emoji">🥡</span>外卖</div>
+      <div class="cat-tag" data-cat="饮料"><span class="emoji">🧃</span>饮料</div>
+      <div class="cat-tag" data-cat="日用品"><span class="emoji">🏠</span>日用品</div>
+      <div class="cat-tag" data-cat="下馆子"><span class="emoji">🍜</span>下馆子</div>
+      <div class="cat-tag" data-cat="其他"><span class="emoji">📌</span>其他</div>
+    </div>
+
+    <div class="input-row">
+      <div class="input-group">
+        <label>备注（可不填）</label>
+        <input type="text" id="noteInput" placeholder="猪肉、青菜……">
+      </div>
+      <div class="input-group">
+        <label>金额 ¥</label>
+        <input type="number" id="amountInput" placeholder="0.00" min="0" step="0.01">
+      </div>
+    </div>
+
+    <div class="date-row">
+      <label>日期</label>
+      <input type="date" id="dateInput">
+    </div>
+
+    <button class="btn-submit" id="submitBtn">＋ 记一笔</button>
+  </div>
+
+  <!-- RECORDS -->
+  <div id="recordsArea"></div>
+</div>
+
+<!-- TAB: 本周 -->
+<div class="tab-content" id="tab-week">
+  <div class="stats-card" id="weekStats"></div>
+</div>
+
+<!-- TAB: 月度 -->
+<div class="tab-content" id="tab-month">
+  <div class="stats-card" id="monthStats"></div>
+</div>
+
+<script>
+// ===== CATEGORIES =====
+const CATS = {
+  '买菜': '🛒', '外卖': '🥡', '饮料': '🧃',
+  '日用品': '🏠', '下馆子': '🍜', '其他': '📌'
+};
+
+// ===== STATE =====
+let records = JSON.parse(localStorage.getItem('xiaozhangben_v2') || '[]');
+let selectedCat = '买菜';
+
+// ===== DATE UTILS =====
+function today() {
+  return new Date().toISOString().slice(0,10);
+}
+function formatDate(d) {
+  const date = new Date(d + 'T00:00:00');
+  const days = ['日','一','二','三','四','五','六'];
+  const m = String(date.getMonth()+1).padStart(2,'0');
+  const day = String(date.getDate()).padStart(2,'0');
+  return `${m}/${day} 周${days[date.getDay()]}`;
+}
+function formatTime() {
+  const n = new Date();
+  return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+}
+function getWeekRange() {
+  const now = new Date();
+  const day = now.getDay();
+  const mon = new Date(now); mon.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  return [mon.toISOString().slice(0,10), sun.toISOString().slice(0,10)];
+}
+function getMonthRange() {
+  const now = new Date();
+  const first = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+  const last = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().slice(0,10);
+  return [first, last];
+}
+
+// ===== SAVE =====
+function save() {
+  localStorage.setItem('xiaozhangben_v2', JSON.stringify(records));
+}
+
+// ===== RENDER HEADER =====
+function renderHeader() {
+  document.getElementById('headerDate').textContent = new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'long',day:'numeric'});
+  const total = records.reduce((s,r) => s + r.amount, 0);
+  document.getElementById('headerTotal').textContent = '¥' + total.toFixed(2);
+}
+
+// ===== RENDER RECORDS =====
+function renderRecords() {
+  const area = document.getElementById('recordsArea');
+  if (!records.length) {
+    area.innerHTML = '<div class="empty-hint">还没有记录，开始记第一笔吧～</div>';
+    return;
+  }
+  // Group by date desc
+  const byDate = {};
+  records.slice().reverse().forEach(r => {
+    (byDate[r.date] = byDate[r.date] || []).push(r);
+  });
+  const dates = Object.keys(byDate).sort((a,b) => b.localeCompare(a));
+  area.innerHTML = dates.map(d => {
+    const dayTotal = byDate[d].reduce((s,r) => s + r.amount, 0);
+    const items = byDate[d].map(r => `
+      <div class="record-item">
+        <div class="record-icon">${CATS[r.cat] || '📌'}</div>
+        <div class="record-info">
+          <div class="record-cat">${r.cat}</div>
+          ${r.note ? `<div class="record-note">${r.note}</div>` : ''}
+          <div class="record-time">${r.time}</div>
+        </div>
+        <div class="record-right">
+          <div class="record-amount">¥${r.amount.toFixed(2)}</div>
+        </div>
+        <div class="record-del" onclick="deleteRecord('${r.id}')">×</div>
+      </div>
+    `).join('');
+    return `
+      <div class="section-date">
+        <span class="section-date-label">${formatDate(d)}</span>
+        <span class="section-date-total">¥${dayTotal.toFixed(2)}</span>
+      </div>
+      <div class="record-list">${items}</div>
+    `;
+  }).join('');
+}
+
+// ===== RENDER STATS =====
+function renderStats(containerId, filterFn, title) {
+  const el = document.getElementById(containerId);
+  const filtered = records.filter(filterFn);
+  if (!filtered.length) {
+    el.innerHTML = `<div class="stats-title">${title}</div><div class="empty-hint">暂无数据</div>`;
+    return;
+  }
+  const byCat = {};
+  filtered.forEach(r => { byCat[r.cat] = (byCat[r.cat] || 0) + r.amount; });
+  const total = filtered.reduce((s,r) => s + r.amount, 0);
+  const rows = Object.entries(byCat).sort((a,b) => b[1]-a[1])
+    .map(([cat, amt]) => `
+      <div class="stats-row">
+        <div class="stats-cat">${CATS[cat]||'📌'} ${cat}</div>
+        <div class="stats-amt">¥${amt.toFixed(2)}</div>
+      </div>
+    `).join('');
+  el.innerHTML = `
+    <div class="stats-title">${title}</div>
+    ${rows}
+    <div class="stats-total-row">
+      <div class="stats-total-label">合计</div>
+      <div class="stats-total-amt">¥${total.toFixed(2)}</div>
+    </div>
+  `;
+}
+
+// ===== RENDER ALL =====
+function renderAll() {
+  renderHeader();
+  renderRecords();
+  const [ws, we] = getWeekRange();
+  renderStats('weekStats', r => r.date >= ws && r.date <= we, '本周支出');
+  const [ms, me] = getMonthRange();
+  renderStats('monthStats', r => r.date >= ms && r.date <= me, '本月支出');
+}
+
+// ===== DELETE =====
+function deleteRecord(id) {
+  if (!confirm('删除这条记录？')) return;
+  records = records.filter(r => r.id !== id);
+  save(); renderAll();
+}
+
+// ===== ADD RECORD =====
+function addRecord(cat, amount, note, date) {
+  const r = {
+    id: Date.now() + '' + Math.random().toString(36).slice(2,6),
+    cat, amount, note, date,
+    time: formatTime()
+  };
+  records.push(r);
+  save(); renderAll();
+}
+
+// ===== FORM SUBMIT =====
+document.getElementById('submitBtn').addEventListener('click', () => {
+  const amount = parseFloat(document.getElementById('amountInput').value);
+  if (!amount || amount <= 0) { alert('请输入金额'); return; }
+  const note = document.getElementById('noteInput').value.trim();
+  const date = document.getElementById('dateInput').value || today();
+  addRecord(selectedCat, amount, note, date);
+  document.getElementById('amountInput').value = '';
+  document.getElementById('noteInput').value = '';
+});
+
+// ===== CAT TAGS =====
+document.getElementById('catRow').addEventListener('click', e => {
+  const tag = e.target.closest('.cat-tag');
+  if (!tag) return;
+  document.querySelectorAll('.cat-tag').forEach(t => t.classList.remove('active'));
+  tag.classList.add('active');
+  selectedCat = tag.dataset.cat;
+});
+
+// ===== TABS =====
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ===== DATE DEFAULT =====
+document.getElementById('dateInput').value = today();
+
+// ===== VOICE =====
+const voiceBtn = document.getElementById('voiceBtn');
+const voiceStatus = document.getElementById('voiceStatus');
+let recognition = null;
+let isRecording = false;
+
+function setStatus(msg, type='') {
+  voiceStatus.textContent = msg;
+  voiceStatus.className = 'voice-status' + (type ? ' ' + type : '');
+}
+
+function initRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const r = new SR();
+  r.lang = 'zh-CN';
+  r.continuous = false;
+  r.interimResults = false;
+  r.maxAlternatives = 1;
+  return r;
+}
+
+async function parseVoice(text) {
+  setStatus('AI解析中……', 'loading');
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 200,
+        system: `你是记账助手。用户说一句话描述一笔支出，你提取：类别、金额、备注。
+类别只能是：买菜、外卖、饮料、日用品、下馆子、其他。
+只返回JSON，格式：{"cat":"买菜","amount":30.0,"note":"猪肉青菜"}
+note可为空字符串。如果识别不出金额返回{"error":"无法识别"}`,
+        messages: [{ role: 'user', content: text }]
+      })
+    });
+    const data = await resp.json();
+    const raw = data.content?.[0]?.text || '';
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const obj = JSON.parse(clean);
+    if (obj.error) { setStatus('没识别到金额，请手动填写', 'err'); return; }
+    // Fill form
+    if (obj.cat && CATS[obj.cat]) {
+      selectedCat = obj.cat;
+      document.querySelectorAll('.cat-tag').forEach(t => {
+        t.classList.toggle('active', t.dataset.cat === obj.cat);
+      });
+    }
+    if (obj.amount) document.getElementById('amountInput').value = obj.amount.toFixed(2);
+    if (obj.note) document.getElementById('noteInput').value = obj.note;
+    setStatus(`✓ 已填入：${obj.cat} ¥${obj.amount}${obj.note ? ' · '+obj.note : ''}`, 'ok');
+  } catch(e) {
+    setStatus('AI解析失败，请手动填写', 'err');
+  }
+}
+
+voiceBtn.addEventListener('mousedown', startRecording);
+voiceBtn.addEventListener('touchstart', e => { e.preventDefault(); startRecording(); }, { passive: false });
+voiceBtn.addEventListener('mouseup', stopRecording);
+voiceBtn.addEventListener('mouseleave', stopRecording);
+voiceBtn.addEventListener('touchend', e => { e.preventDefault(); stopRecording(); }, { passive: false });
+voiceBtn.addEventListener('touchcancel', e => { e.preventDefault(); stopRecording(); }, { passive: false });
+
+function startRecording() {
+  if (isRecording) return;
+  recognition = initRecognition();
+  if (!recognition) {
+    setStatus('当前浏览器不支持语音识别，请用 Chrome', 'err');
+    return;
+  }
+  isRecording = true;
+  voiceBtn.classList.add('recording');
+  setStatus('正在听……');
+
+  recognition.onresult = e => {
+    const text = e.results[0][0].transcript;
+    setStatus(`识别到："${text}"`, '');
+    parseVoice(text);
+  };
+  recognition.onerror = e => {
+    setStatus('识别出错：' + e.error, 'err');
+    isRecording = false;
+    voiceBtn.classList.remove('recording');
+  };
+  recognition.onend = () => {
+    isRecording = false;
+    voiceBtn.classList.remove('recording');
+  };
+  recognition.start();
+}
+
+function stopRecording() {
+  if (!isRecording || !recognition) return;
+  recognition.stop();
+}
+
+// ===== INIT =====
+renderAll();
+</script>
+</body>
+</html>
